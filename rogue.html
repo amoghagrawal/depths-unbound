@@ -1,0 +1,163 @@
+<html><head><base href=".">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Depths Unbound</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <button id="openInventoryBtn" onclick="openInventory()">Open Inventory</button>
+  <div id="titleScreenOverlay">
+    <div id="titleBackgroundEffect">
+      <svg class="titleEffectStar" viewBox="0 0 100 100">
+        <polygon points="50,15 61,35 85,35 66,50 73,72 50,60 27,72 34,50 15,35 39,35" fill="white"/>
+      </svg>
+    </div>
+    <div id="titleScreenContainer" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1; background: rgba(0,0,0,0.7); padding: 40px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.5);">
+      <h1>Depths Unbound</h1>
+      <div id="titleSubtext"></div>
+      <div id="titleButtonsContainer">
+        <button onclick="startGame()">Start Game</button>
+        <button id="instructionsBtn" onclick="openInstructions()">Instructions</button>
+      </div>
+    </div>
+  </div>
+  <audio id="backgroundMusic" loop>
+    <source src="/music.wav" type="audio/wav">
+  </audio>
+
+  <div id="instructionsOverlay">
+    <div id="instructionsContainer">
+      <button id="closeInstructionsBtn" onclick="closeInstructions()">&#xd7;</button>
+      <h2>How to Play</h2>
+      <p style="margin-bottom: 20px;">
+        Welcome to the Depths Unbound! Navigate the dungeon and survive the depths of the unknown.
+      </p>
+      <h3>Quick Guide:</h3>
+      <ul style="font-size: 20px; line-height: 1.8; margin-bottom: 30px;">
+        <li>&#x1f3ae; Move with arrow keys or click adjacent tiles</li>  
+        <li>&#x1f392; Press &apos;I&apos; or click inventory button to manage items</li>
+        <li>&#x2764;&#xfe0f; Watch your health and hunger bars</li>
+        <li>&#x1f3c3;&#x200d;&#x2642;&#xfe0f; Find the ladder to descend deeper</li>
+      </ul>
+      <h3>Game Elements:</h3>
+      <ul style="font-size: 20px; line-height: 1.8; margin-bottom: 30px;">
+        <li>&#x2694;&#xfe0f; Combat powerful enemies</li>
+        <li>&#x1f9ea; Use potions and scrolls wisely</li> 
+        <li>&#x1f52e; Find magical items and gear</li>
+        <li>&#x26a1; Watch for traps and hazards</li>
+      </ul>
+      <p style="margin-top: 30px; font-size: 24px; text-align: center; color: #33ff33;">
+        Good luck on your adventure!
+      </p>
+    </div>
+  </div>
+
+  <div class="game-container" id="gameContainer">
+    <div id="player">
+      <svg class="player" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="#f33"/>
+      </svg>
+      <div id="poisonEffect" style="display:none; position:absolute; top:0; left:0; width:40px; height:40px; pointer-events:none;">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="15" fill="purple" fill-opacity="0.4">
+            <animate attributeName="r" values="15;20;15" dur="1.2s" repeatCount="indefinite"/>
+            <animate attributeName="fill-opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <div id="bleedingEffect" style="display:none; position:absolute; top:0; left:0; width:40px; height:40px; pointer-events:none;">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <circle cx="20" cy="0" r="3" fill="red">
+            <animate attributeName="cy" from="0" to="40" dur="1s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="1" to="0" dur="1s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="10" cy="0" r="3" fill="red">
+            <animate attributeName="cy" from="-5" to="35" dur="1s" repeatCount="indefinite" begin="0.2s"/>
+            <animate attributeName="opacity" from="1" to="0" dur="1s" repeatCount="indefinite" begin="0.2s"/>
+          </circle>
+          <circle cx="30" cy="0" r="3" fill="red">
+            <animate attributeName="cy" from="-10" to="30" dur="1s" repeatCount="indefinite" begin="0.4s"/>
+            <animate attributeName="opacity" from="1" to="0" dur="1s" repeatCount="indefinite" begin="0.4s"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="hpContainer">
+    <div id="hpBar"></div>
+  </div>
+
+  <div id="hungerContainer">
+    <div id="hungerBar"></div>
+  </div>
+
+  <div id="turnCounter">Turn: 0</div>
+  <div id="depthCounter">Depth: 1</div>
+
+  <div id="debuffIcons">
+    <div class="debuff-icon" id="poisonDebuffIcon" style="display: none;" onclick="toggleDebuffDesc('poisonDebuffInfo')">
+      <svg width="20" height="20" viewBox="0 0 100 100">
+        <path d="M50 10c-22 0-40 18-40 40s18 40 40 40 40-18 40-40S72 10 50 10zm0 75c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35z" fill="purple"/>
+        <circle cx="50" cy="50" r="15" fill="darkviolet"/>
+      </svg>
+      <div id="poisonDebuffInfo" class="debuff-info">Poison: Takes 1 damage each step for up to 6 steps.</div>
+    </div>
+    <div class="debuff-icon" id="bleedingDebuffIcon" style="display: none;" onclick="toggleDebuffDesc('bleedingDebuffInfo')">
+      <svg width="20" height="20" viewBox="0 0 100 100">
+        <path d="M50 15C30 35 45 60 50 70C55 60 70 35 50 15Z" fill="red"/>
+      </svg>
+      <div id="bleedingDebuffInfo" class="debuff-info">Bleeding: Immobilized for 1 turn, then takes 5 damage each action for 5 turns.</div>
+    </div>
+  </div>
+
+  <div id="inventoryOverlay">
+    <div id="inventoryContainer">
+      <h2 class="inventory-title">Inventory</h2>
+      <input type="text" id="inventorySearch" placeholder="Search inventory..." oninput="searchInventory()">
+      <div id="inventorySlots"></div>
+      <div id="gearSlots"></div>
+      <div class="inventory-controls">
+        <button onclick="showGearPage()">Gear Slots</button>
+        <button onclick="showItemsPage()">Items</button>  
+        <button onclick="closeInventory()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="itemDetailOverlay">
+    <div id="itemDetailContainer">
+      <div id="itemDetailName"></div>
+      <div id="itemDetailDescription"></div>
+      <div id="itemDetailStats"></div>
+      <div id="itemDetailButtons">
+        <button id="useItemBtn" onclick="useSelectedItem()">Use</button>
+        <button onclick="closeItemDetail()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="fadeOverlay"></div>
+
+  <canvas id="minimapCanvas" width="120" height="120"></canvas>
+
+  <div id="gameOverOverlay" style="display: none;">
+    <div class="game-over-content">
+      <h1>Game Over</h1>
+      <p id="gameOverReason"></p>
+      <p id="gameOverStats"></p>
+      <button onclick="restartGame()">Try Again</button>
+    </div>
+  </div>
+
+  <div id="victoryOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 40000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #33ff33;">
+      <h1 style="font-size: 48px; margin-bottom: 20px;">Victory!</h1>
+      <p style="font-size: 24px; margin-bottom: 30px;">You have conquered the dungeon!</p>
+      <p id="victoryStats" style="font-size: 18px; margin-bottom: 30px;"></p>
+      <button onclick="restartGame()" style="padding: 10px 20px; font-size: 20px; background: #33ff33; color: white; border: none; border-radius: 5px; cursor: pointer;">Play Again</button>
+    </div>
+  </div>
+  <script src="/script.js"></script>
+</body>
+</html>
